@@ -1,16 +1,26 @@
 package recaptcha
 
 import (
-	"time"
-	"fmt"
-	"net/url"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/url"
+	"time"
 
+	"github.com/kataras/iris"
 	"github.com/kataras/iris/context"
 	"github.com/kataras/iris/core/netutil"
-	"github.com/kataras/iris"
 )
+
+// Config is a struct for specifying configuration options for the recaptcha middleware.
+type Config struct {
+	// Extractor is the method for extracting recaptcha token from request
+	// Default: FromHeader (i.e., from recaptcha header as token)
+	Extractor TokenExtractor
+	// The function that will be called when there's an error validating the token
+	// Default value:
+	ErrorHandler errorHandler
+}
 
 // TokenExtractor is a function that takes a context as input and returns
 // either a token or an error.  An error should only be returned if an attempt
@@ -101,7 +111,7 @@ func (m *Middleware) SiteVerify(ctx context.Context) error {
 
 	generatedResponseID, err := FromHeader(ctx)
 	if err != nil || generatedResponseID == "" {
-		m.Config.ErrorHandler(ctx, "captcha response not found")
+		m.Config.ErrorHandler(ctx, err.Error())
 		return fmt.Errorf("generated response is not valid")
 	}
 
